@@ -1,5 +1,6 @@
 class Blog {
-    constructor(swarm) {
+    constructor(swarm, ensUtility) {
+        this.ensUtility = ensUtility;
         this.last_photoalbum_id = 0;
         this.last_videoalbum_id = 0;
         this.prefix = "social/";
@@ -14,6 +15,20 @@ class Blog {
         } else {
             this.uploadedSwarmHash = '';
         }
+    }
+
+    getSwarmHashByWallet(walletAddress) {
+        let self = this;
+        return new Promise((resolve, reject) => {
+            self.ensUtility.contract.getHash.call(walletAddress, function (error, result) {
+                console.log([error, result]);
+                if (error) {
+                    reject(error);
+                } else{
+                   resolve(result);
+                }
+            });
+        });
     }
 
     getDefaultProfile() {
