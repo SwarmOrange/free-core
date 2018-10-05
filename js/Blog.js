@@ -24,8 +24,8 @@ class Blog {
                 console.log([error, result]);
                 if (error) {
                     reject(error);
-                } else{
-                   resolve(result);
+                } else {
+                    resolve(result);
                 }
             });
         });
@@ -463,9 +463,9 @@ class Blog {
             throw('Private messages not supported');
         }
 
-        if (!Blog.isCorrectSwarmHash(receiverHash)) {
+        /*if (!Blog.isCorrectSwarmHash(receiverHash)) {
             throw('Incorrect receiver hash');
-        }
+        }*/
 
         if (!message) {
             throw('Empty message');
@@ -494,11 +494,13 @@ class Blog {
             });
         };
 
-        return self.getMessageInfo().then(function (response) {
-            return sendMessage(response.data);
-        }).catch(function () {
-            return sendMessage({});
-        });
+        return self.getMessageInfo()
+            .then(function (response) {
+                return sendMessage(response.data);
+            })
+            .catch(function () {
+                return sendMessage({});
+            });
     }
 
     getMessage(id, receiverHash) {
