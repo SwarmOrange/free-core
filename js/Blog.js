@@ -507,8 +507,8 @@ class Blog {
         return this.swarm.get(this.prefix + 'message/public/' + receiverHash + '/' + id + '.json');
     }
 
-    getMessageInfo() {
-        return this.swarm.get(this.prefix + 'message/public/info.json');
+    getMessageInfo(userHash) {
+        return this.swarm.get(this.prefix + 'message/public/info.json', userHash);
     }
 
     saveMessageInfo(data) {
