@@ -503,8 +503,8 @@ class Blog {
             });
     }
 
-    getMessage(id, receiverHash) {
-        return this.swarm.get(this.prefix + 'message/public/' + receiverHash + '/' + id + '.json');
+    getMessage(id, receiverHash, userHash) {
+        return this.swarm.get(this.prefix + 'message/public/' + receiverHash + '/' + id + '.json', userHash);
     }
 
     getMessageInfo(userHash) {
