@@ -457,7 +457,7 @@ class Blog {
         return this.swarm.post(null, data, null, null, 'bzz-resource:');
     }
 
-    saveMessage(receiverHash, message, isPrivate) {
+    saveMessage(receiverHash, message, afterMessageId, isPrivate) {
         let self = this;
         if (isPrivate) {
             throw('Private messages not supported');
@@ -484,7 +484,8 @@ class Blog {
 
             let data = {
                 id: messageId,
-                receiverHash: receiverHash,
+                after_message_id: afterMessageId,
+                receiver_hash: receiverHash,
                 message: message
             };
 
