@@ -8,7 +8,11 @@ class Blog {
         this.swarm = swarm;
         this.version = 1;
         this.myProfile = {};
-        let elements = window.location.href.split('/').filter(word => word.length === 64 || word.length === 128 || (word.length >= 11 && word.endsWith('.eth')));
+        let elements = [];
+        if (typeof window !== 'undefined') {
+            elements = window.location.href.split('/').filter(word => word.length === 64 || word.length === 128 || (word.length >= 11 && word.endsWith('.eth')));
+        }
+
         this.uploadedToSwarm = elements.length > 0;
         if (this.uploadedToSwarm) {
             this.uploadedSwarmHash = elements[0];
