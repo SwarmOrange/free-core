@@ -238,13 +238,14 @@ class Blog {
 
     editPost(id, description, attachments) {
         let self = this;
-        attachments = attachments || [];
-        return this.getPost(id).then(function (response) {
-            let data = response.data;
-            data.description = description;
-            data.attachments = attachments;
-            return self.swarm.post(self.prefix + "post/" + id + "/info.json", JSON.stringify(data), 'application/json');
-        });
+        return this.getPost(id)
+            .then(function (response) {
+                let data = response.data;
+                attachments = attachments || data.attachments;
+                data.description = description;
+                data.attachments = attachments;
+                return self.swarm.post(self.prefix + "post/" + id + "/info.json", JSON.stringify(data), 'application/json');
+            });
     }
 
     createVideoAlbum(id, name, description, videos) {
