@@ -311,11 +311,42 @@ class Blog {
         return this.swarm.get(this.prefix + 'videoalbum/' + id + '/info.json');
     }
 
-    uploadFileToVideoalbum(albumId, file, onProgress) {
+    saveVideoAlbumInfo(id, info) {
+        return this.sendRawFile(this.prefix + "videoalbum/" + id + "/info.json", JSON.stringify(info), 'application/json');
+    }
+
+    uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
+        let self = this;
         let fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
+
         return this.sendRawFile(fileName, file, file.type, null, null, onProgress)
             .then(function (response) {
-                return {fileName: fileName, response: response.data};
+                if (fileInfo) {
+                    return self.getAlbumInfo(albumId)
+                        .then(function (response) {
+                            let data = response.data;
+                            if (data.videos) {
+                                data.videos.push(fileInfo);
+                            } else {
+                                data.videos = [
+                                    fileInfo
+                                ];
+                            }
+
+                            return self.saveVideoAlbumInfo(albumId, data);
+                        })
+                        .then(function (response) {
+                            return {
+                                fileName: fileName,
+                                response: response.data
+                            };
+                        });
+                } else {
+                    return {
+                        fileName: fileName,
+                        response: response.data
+                    };
+                }
             });
     }
 
@@ -356,11 +387,11 @@ class Blog {
                     data.push(newAlbumInfo);
                     console.log('album info');
                     console.log(data);
-                    return self.saveAlbumsInfo(data).then(function (response) {
+                    return self.savePhotoAlbumsInfo(data).then(function (response) {
                         return navigateAndSaveProfile(response);
                     });
                 }).catch(function () {
-                    return self.saveAlbumsInfo([newAlbumInfo]).then(function (response) {
+                    return self.savePhotoAlbumsInfo([newAlbumInfo]).then(function (response) {
                         return navigateAndSaveProfile(response);
                     });
                 });
@@ -388,7 +419,7 @@ class Blog {
         return this.swarm.get(this.prefix + 'photoalbum/info.json');
     }
 
-    saveAlbumsInfo(data) {
+    savePhotoAlbumsInfo(data) {
         return this.sendRawFile(this.prefix + "photoalbum/info.json", JSON.stringify(data), 'application/json');
     }
 
@@ -412,7 +443,7 @@ class Blog {
                     });
                 }
 
-                return self.saveAlbumsInfo(newAlbums);
+                return self.savePhotoAlbumsInfo(newAlbums);
             });
     }
 
