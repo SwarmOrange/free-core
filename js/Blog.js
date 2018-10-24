@@ -269,7 +269,7 @@ class Blog {
                     self.swarm.applicationHash = response.data;
                     self.myProfile.last_videoalbum_id = id;
 
-                    return {response: self.saveProfile(self.myProfile), info: info};
+                    return {response: self.saveProfile(self.myProfile), info: info, hash : response.data};
                 });
         };
 
@@ -329,6 +329,7 @@ class Blog {
         If many services are trying to upload to the same albumId, they may generate the same new videoId before they are uploaded.
     */
     generateVideoEntry( albumId, name, description, cover_file, file, type ) {
+
         return this.getVideoAlbumInfo( albumId ).then( function( response ) {
             const albumInfo = response.data;
             const videos = albumInfo.videos;
@@ -354,6 +355,7 @@ class Blog {
         return this.getAlbumInfo( albumId )
             .then( function( response ) {
                 let data = response.data;
+
                 if ( data.videos ) {
                     data.videos.push( fileInfo );
                 } else {
