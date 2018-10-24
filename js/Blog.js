@@ -248,18 +248,26 @@ class Blog {
             });
     }
 
-    createVideoAlbum(id, name, description, videos) {
+    createVideoAlbum( id, name, description, videos, coverOverride ) {
         let self = this;
+        let coverFile;
+
         videos = videos || [];
-        let coverFile = videos.length ? videos[0].cover_file : videos;
+
+        if ( coverOverride ) {
+            coverFile = this.prefix + "videoalbum/" + id + "/" + coverOverride;
+        } else {
+            coverFile = videos.length ? videos[0].cover_file : videos;
+        }
+
         let fileType = videos.length ? videos[0].type : videos;
         let info = {
-            id: id,
-            type: fileType,
-            name: name,
-            description: description,
-            cover_file: coverFile,
-            videos: videos
+            id : id,
+            type : fileType,
+            name : name,
+            description : description,
+            cover_file : coverFile,
+            videos : videos
         };
 
         let finalSave = function (data) {
@@ -318,9 +326,8 @@ class Blog {
     getLatestAlbumId() {
         return this.getVideoAlbumsInfo().then( response => {
             const ids = response.data.map( album => album.id );
-            const newId = ids.pop() + 1;
 
-            return ids.pop() || 1; // in case there was only 1 album
+            return ids.pop() || 1;
         } );
     }
 
@@ -329,30 +336,29 @@ class Blog {
         If many services are trying to upload to the same albumId, they may generate the same new videoId before they are uploaded.
     */
     generateVideoEntry( albumId, name, description, cover_file, file, type ) {
+        const self = this;
 
         return this.getVideoAlbumInfo( albumId ).then( function( response ) {
             const albumInfo = response.data;
             const videos = albumInfo.videos;
             const hasNoVideos = !videos || videos.length == 0;
-            let id;
-
-            if ( hasNoVideos ) return 1;
-
-            id = videos.length + 1;
+            const id = hasNoVideos ? 1 : videos.length + 1;
 
             return {
                 id : id,
                 name : name,
                 description : description,
-                cover_file : cover_file,
-                file : file,
+                cover_file : self.prefix + "videoalbum/" + albumId + "/" + cover_file,
+                file : self.prefix + "videoalbum/" + albumId + "/" + file,
                 type : type
             };
         } );
     }
 
     appendVideoEntry( albumId, fileInfo ) {
-        return this.getAlbumInfo( albumId )
+        const self = this;
+
+        return this.getVideoAlbumInfo( albumId )
             .then( function( response ) {
                 let data = response.data;
 
@@ -366,7 +372,6 @@ class Blog {
             } )
             .then( function( response ) {
                 return {
-                    fileName : fileName,
                     response : response.data
                 };
             } );
