@@ -315,6 +315,61 @@ class Blog {
         return this.sendRawFile(this.prefix + "videoalbum/" + id + "/info.json", JSON.stringify(info), 'application/json');
     }
 
+    getLatestAlbumId() {
+        return this.getVideoAlbumsInfo().then( response => {
+            const ids = response.data.map( album => album.id );
+            const newId = ids.pop() + 1;
+
+            return ids.pop() || 1; // in case there was only 1 album
+        } );
+    }
+
+    /*
+        Concern:
+        If many services are trying to upload to the same albumId, they may generate the same new videoId before they are uploaded.
+    */
+    generateVideoEntry( albumId, name, description, cover_file, file, type ) {
+        return this.getVideoAlbumInfo( albumId ).then( function( response ) {
+            const albumInfo = response.data;
+            const videos = albumInfo.videos;
+            const hasNoVideos = !videos || videos.length == 0;
+            let id;
+
+            if ( hasNoVideos ) return 1;
+
+            id = videos.length + 1;
+
+            return {
+                id : id,
+                name : name,
+                description : description,
+                cover_file : cover_file,
+                file : file,
+                type : type
+            };
+        } );
+    }
+
+    appendVideoEntry( albumId, fileInfo ) {
+        return this.getAlbumInfo( albumId )
+            .then( function( response ) {
+                let data = response.data;
+                if ( data.videos ) {
+                    data.videos.push( fileInfo );
+                } else {
+                    data.videos = [ fileInfo ];
+                }
+
+                return self.saveVideoAlbumInfo( albumId, data );
+            } )
+            .then( function( response ) {
+                return {
+                    fileName : fileName,
+                    response : response.data
+                };
+            } );
+    }
+
     uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
         let self = this;
         let fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
