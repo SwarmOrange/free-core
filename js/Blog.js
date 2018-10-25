@@ -377,6 +377,17 @@ class Blog {
             } );
     }
 
+    // I cannot use the browser API for new File(), and thus have to pass the data differently.
+    uploadFileToVideoAlbumNodeJs(albumId, file, onProgress, data ) {
+        const fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
+
+        return this.sendRawFile(fileName, file.data, file.type, null, null, onProgress)
+        .then(function (response) {
+
+            return {fileName: fileName, response: response.data};
+        });
+    }
+
     uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
         let self = this;
         let fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
