@@ -22,7 +22,7 @@ class Blog {
     }
 
     getSwarmHashByWallet(walletAddress) {
-        let self = this;
+        const self = this;
         return new Promise((resolve, reject) => {
             self.ensUtility.contract.getHash.call(walletAddress, function (error, result) {
                 console.log([error, result]);
@@ -141,8 +141,8 @@ class Blog {
     }
 
     uploadFilesForPost(id, filesFormData, onUploadProgress) {
-        let contentType = 'multipart/form-data';
-        let self = this;
+        const contentType = 'multipart/form-data';
+        const self = this;
         let url = this.prefix + "post/" + id + "/file/";
 
         return this.sendRawFile(url, filesFormData, contentType, null, null, onUploadProgress)
@@ -157,7 +157,7 @@ class Blog {
     }
 
     uploadAvatar(fileContent) {
-        let self = this;
+        const self = this;
         let url = this.prefix + "file/avatar/original.jpg";
 
         return this.sendRawFile(url, fileContent, 'image/jpeg')
@@ -174,7 +174,7 @@ class Blog {
     }
 
     createPost(id, description, attachments) {
-        let self = this;
+        const self = this;
         attachments = attachments || [];
         attachments.forEach(function (v, i) {
             v.id = i + 1;
@@ -201,7 +201,7 @@ class Blog {
     }
 
     deletePost(id) {
-        let self = this;
+        const self = this;
         let urlPath = this.prefix + 'post/' + id + '/';
         return this.deleteFile(urlPath + 'info.json')
             .then(function (response) {
@@ -211,7 +211,7 @@ class Blog {
     }
 
     deletePostAttachment(postId, attachmentId) {
-        let self = this;
+        const self = this;
         return self.getPost(postId).then(function (response) {
             let data = response.data;
             let newAttachments = [];
@@ -238,7 +238,7 @@ class Blog {
     }
 
     editPost(id, description, attachments) {
-        let self = this;
+        const self = this;
         return this.getPost(id)
             .then(function (response) {
                 let data = response.data;
@@ -250,7 +250,7 @@ class Blog {
     }
 
     createVideoAlbum(id, name, description, videos, coverOverride) {
-        let self = this;
+        const self = this;
         let coverFile;
 
         videos = videos || [];
@@ -390,7 +390,7 @@ class Blog {
     }
 
     uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
-        let self = this;
+        const self = this;
         let fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
 
         return this.sendRawFile(fileName, file, file.type, null, null, onProgress)
@@ -425,7 +425,7 @@ class Blog {
     }
 
     createPhotoAlbum(id, name, description, photos) {
-        let self = this;
+        const self = this;
         photos = photos || [];
         let coverFile = photos.length ? photos[0] : photos;
         let info = {
@@ -500,7 +500,7 @@ class Blog {
     }
 
     deletePhotoAlbum(id) {
-        let self = this;
+        const self = this;
         return this.swarm.delete(this.prefix + 'photoalbum/' + id + '/')
             .then(function (response) {
                 self.swarm.applicationHash = response.data;
@@ -524,7 +524,7 @@ class Blog {
     }
 
     createMru(ownerAddress) {
-        let self = this;
+        const self = this;
         // todo save it to profile
         if (!ownerAddress) {
             throw "Empty owner address";
@@ -571,7 +571,7 @@ class Blog {
     }
 
     saveMessage(receiverHash, message, afterReceiverMessage, afterMessageId, timestamp, isPrivate) {
-        let self = this;
+        const self = this;
         timestamp = timestamp || +new Date();
         if (isPrivate) {
             throw('Private messages not supported');
@@ -625,11 +625,115 @@ class Blog {
     }
 
     getMessageInfo(userHash) {
-        return this.swarm.get(this.prefix + 'message/public/info.json', userHash);
+        const self = this;
+        return this.swarm.get(this.prefix + 'message/public/info.json', userHash)
+            .then(function (response) {
+                if (response.data) {
+                    self.objectKeysToLowerCase(response.data);
+                }
+
+                return response;
+            });
     }
 
     saveMessageInfo(data) {
         return this.swarm.post(this.prefix + 'message/public/info.json', JSON.stringify(data));
+    }
+
+    objectKeysToLowerCase(input, deep, filter) {
+        var idx, key, keys, last, output, self, type, value;
+        self = objectKeysToLowerCase;
+        type = typeof deep;
+
+        // Convert "deep" to a number between 0 to Infinity or keep special object.
+        if (type === 'undefined' || deep === null || deep === 0 || deep === false) {
+            deep = 0; // Shallow copy
+        }
+        else if (type === 'object') {
+            if (!(deep instanceof self)) {
+                throw new TypeError('Expected "deep" to be a special object');
+            }
+        }
+        else if (deep === true) {
+            deep = Infinity; // Deep copy
+        }
+        else if (type === 'number') {
+            if (isNaN(deep) || deep < 0) {
+                throw new RangeError(
+                    'Expected "deep" to be a positive number, got ' + deep
+                );
+            }
+        }
+        else throw new TypeError(
+                'Expected "deep" to be a boolean, number or object, got "' + type + '"'
+            );
+
+
+        // Check type of input, and throw if null or not an object.
+        if (input === null || typeof input !== 'object') {
+            throw new TypeError('Expected "input" to be an object');
+        }
+
+        // Check type of filter
+        type = typeof filter;
+        if (filter === null || type === 'undefined' || type === 'function') {
+            filter = filter || null;
+        } else {
+            throw new TypeError('Expected "filter" to be a function');
+        }
+
+        keys = Object.keys(input); // Get own keys from object
+        last = keys.length - 1;
+        output = {}; // new object
+
+        if (deep) { // only run the deep copy if needed.
+            if (typeof deep === 'number') {
+                // Create special object to be used during deep copy
+                deep =
+                    Object.seal(
+                        Object.create(
+                            self.prototype,
+                            {
+                                input: {value: []},
+                                output: {value: []},
+                                level: {value: -1, writable: true},
+                                max: {value: deep, writable: false}
+                            }
+                        )
+                    );
+            } else {
+                // Circle detection
+                idx = deep.input.indexOf(input);
+                if (~idx) {
+                    return deep.output[idx];
+                }
+            }
+
+            deep.level += 1;
+            deep.input.push(input);
+            deep.output.push(output);
+
+            idx = last + 1;
+            while (idx--) {
+                key = keys[last - idx]; // Using [last - idx] to preserve order.
+                value = input[key];
+                if (typeof value === 'object' && value && deep.level < deep.max) {
+                    if (filter ? filter(value) : value.constructor === Object) {
+                        value = self(value, deep, filter);
+                    }
+                }
+                output[key.toLowerCase()] = value;
+            }
+            deep.level -= 1;
+        } else {
+            // Simple shallow copy
+            idx = last + 1;
+            while (idx--) {
+                key = keys[last - idx]; // Using [last - idx] to preserve order.
+                output[key.toLowerCase()] = input[key];
+            }
+        }
+        return output;
     }
 }
 
