@@ -248,18 +248,26 @@ class Blog {
             });
     }
 
-    createVideoAlbum(id, name, description, videos) {
+    createVideoAlbum( id, name, description, videos, coverOverride ) {
         let self = this;
+        let coverFile;
+
         videos = videos || [];
-        let coverFile = videos.length ? videos[0].cover_file : videos;
+
+        if ( coverOverride ) {
+            coverFile = this.prefix + "videoalbum/" + id + "/" + coverOverride;
+        } else {
+            coverFile = videos.length ? videos[0].cover_file : videos;
+        }
+
         let fileType = videos.length ? videos[0].type : videos;
         let info = {
-            id: id,
-            type: fileType,
-            name: name,
-            description: description,
-            cover_file: coverFile,
-            videos: videos
+            id : id,
+            type : fileType,
+            name : name,
+            description : description,
+            cover_file : coverFile,
+            videos : videos
         };
 
         let finalSave = function (data) {
@@ -269,7 +277,7 @@ class Blog {
                     self.swarm.applicationHash = response.data;
                     self.myProfile.last_videoalbum_id = id;
 
-                    return {response: self.saveProfile(self.myProfile), info: info};
+                    return {response: self.saveProfile(self.myProfile), info: info, hash : response.data};
                 });
         };
 
@@ -313,6 +321,71 @@ class Blog {
 
     saveVideoAlbumInfo(id, info) {
         return this.sendRawFile(this.prefix + "videoalbum/" + id + "/info.json", JSON.stringify(info), 'application/json');
+    }
+
+    getLatestAlbumId() {
+        return this.getVideoAlbumsInfo().then( response => {
+            const ids = response.data.map( album => album.id );
+
+            return ids.pop() || 1;
+        } );
+    }
+
+    /*
+        Concern:
+        If many services are trying to upload to the same albumId, they may generate the same new videoId before they are uploaded.
+    */
+    generateVideoEntry( albumId, name, description, cover_file, file, type ) {
+        const self = this;
+
+        return this.getVideoAlbumInfo( albumId ).then( function( response ) {
+            const albumInfo = response.data;
+            const videos = albumInfo.videos;
+            const hasNoVideos = !videos || videos.length == 0;
+            const id = hasNoVideos ? 1 : videos.length + 1;
+
+            return {
+                id : id,
+                name : name,
+                description : description,
+                cover_file : self.prefix + "videoalbum/" + albumId + "/" + cover_file,
+                file : self.prefix + "videoalbum/" + albumId + "/" + file,
+                type : type
+            };
+        } );
+    }
+
+    appendVideoEntry( albumId, fileInfo ) {
+        const self = this;
+
+        return this.getVideoAlbumInfo( albumId )
+            .then( function( response ) {
+                let data = response.data;
+
+                if ( data.videos ) {
+                    data.videos.push( fileInfo );
+                } else {
+                    data.videos = [ fileInfo ];
+                }
+
+                return self.saveVideoAlbumInfo( albumId, data );
+            } )
+            .then( function( response ) {
+                return {
+                    response : response.data
+                };
+            } );
+    }
+
+    // I cannot use the browser API for new File(), and thus have to pass the data differently. We could perhaps also the existing function, but this edit gets me going for now and can open discussion.
+    uploadFileToVideoAlbumNodeJs(albumId, file, onProgress, data ) {
+        const fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
+
+        return this.sendRawFile(fileName, file.data, file.type, null, null, onProgress)
+        .then(function (response) {
+
+            return {fileName: fileName, response: response.data};
+        });
     }
 
     uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
