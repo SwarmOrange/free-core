@@ -629,7 +629,7 @@ class Blog {
         return this.swarm.get(this.prefix + 'message/public/info.json', userHash)
             .then(function (response) {
                 if (response.data) {
-                    self.objectKeysToLowerCase(response.data);
+                    response.data = self.objectKeysToLowerCase(response.data);
                 }
 
                 return response;
