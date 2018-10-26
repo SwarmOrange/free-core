@@ -108,6 +108,7 @@ class Blog {
     }
 
     addIFollow(swarmProfileHash, userHash) {
+        swarmProfileHash = swarmProfileHash.toLowerCase();
         if ('i_follow' in this.myProfile) {
             if (this.myProfile.i_follow.indexOf(swarmProfileHash) > -1) {
                 throw "Hash already exists";
@@ -122,6 +123,7 @@ class Blog {
     }
 
     deleteIFollow(swarmProfileHash, userHash) {
+        swarmProfileHash = swarmProfileHash.toLowerCase();
         if ('i_follow' in this.myProfile) {
             if (this.myProfile.i_follow.indexOf(swarmProfileHash) > -1) {
                 let index = this.myProfile.i_follow.indexOf(swarmProfileHash);
@@ -143,7 +145,7 @@ class Blog {
     uploadFilesForPost(id, filesFormData, onUploadProgress) {
         const contentType = 'multipart/form-data';
         const self = this;
-        let url = this.prefix + "post/" + id + "/file/";
+        const url = this.prefix + "post/" + id + "/file/";
 
         return this.sendRawFile(url, filesFormData, contentType, null, null, onUploadProgress)
             .then(function (response) {
@@ -158,7 +160,7 @@ class Blog {
 
     uploadAvatar(fileContent) {
         const self = this;
-        let url = this.prefix + "file/avatar/original.jpg";
+        const url = this.prefix + "file/avatar/original.jpg";
 
         return this.sendRawFile(url, fileContent, 'image/jpeg')
             .then(function (response) {
