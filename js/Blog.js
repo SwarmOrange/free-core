@@ -642,7 +642,7 @@ class Blog {
 
     objectKeysToLowerCase(input, deep, filter) {
         var idx, key, keys, last, output, self, type, value;
-        self = objectKeysToLowerCase;
+        self = this.objectKeysToLowerCase;
         type = typeof deep;
 
         // Convert "deep" to a number between 0 to Infinity or keep special object.
