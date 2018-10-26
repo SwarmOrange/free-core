@@ -107,7 +107,7 @@ class Blog {
         return this.myProfile.i_follow ? this.myProfile.i_follow.slice(0) : [];
     }
 
-    addIFollow(swarmProfileHash) {
+    addIFollow(swarmProfileHash, userHash) {
         if ('i_follow' in this.myProfile) {
             if (this.myProfile.i_follow.indexOf(swarmProfileHash) > -1) {
                 throw "Hash already exists";
@@ -118,10 +118,10 @@ class Blog {
             this.myProfile.i_follow = [swarmProfileHash];
         }
 
-        return this.saveProfile(this.myProfile);
+        return this.saveProfile(this.myProfile, userHash);
     }
 
-    deleteIFollow(swarmProfileHash) {
+    deleteIFollow(swarmProfileHash, userHash) {
         if ('i_follow' in this.myProfile) {
             if (this.myProfile.i_follow.indexOf(swarmProfileHash) > -1) {
                 let index = this.myProfile.i_follow.indexOf(swarmProfileHash);
@@ -133,7 +133,7 @@ class Blog {
             this.myProfile.i_follow = [];
         }
 
-        return this.saveProfile(this.myProfile);
+        return this.saveProfile(this.myProfile, userHash);
     }
 
     sendRawFile(fileName, data, fileType, userHash, swarmProtocol, onProgress) {
@@ -203,10 +203,11 @@ class Blog {
     deletePost(id) {
         let self = this;
         let urlPath = this.prefix + 'post/' + id + '/';
-        return this.deleteFile(urlPath + 'info.json').then(function (response) {
-            self.swarm.applicationHash = response.data;
-            return self.deleteFile(urlPath);
-        });
+        return this.deleteFile(urlPath + 'info.json')
+            .then(function (response) {
+                self.swarm.applicationHash = response.data;
+                return self.deleteFile(urlPath);
+            });
     }
 
     deletePostAttachment(postId, attachmentId) {
@@ -248,13 +249,13 @@ class Blog {
             });
     }
 
-    createVideoAlbum( id, name, description, videos, coverOverride ) {
+    createVideoAlbum(id, name, description, videos, coverOverride) {
         let self = this;
         let coverFile;
 
         videos = videos || [];
 
-        if ( coverOverride ) {
+        if (coverOverride) {
             coverFile = this.prefix + "videoalbum/" + id + "/" + coverOverride;
         } else {
             coverFile = videos.length ? videos[0].cover_file : videos;
@@ -262,12 +263,12 @@ class Blog {
 
         let fileType = videos.length ? videos[0].type : videos;
         let info = {
-            id : id,
-            type : fileType,
-            name : name,
-            description : description,
-            cover_file : coverFile,
-            videos : videos
+            id: id,
+            type: fileType,
+            name: name,
+            description: description,
+            cover_file: coverFile,
+            videos: videos
         };
 
         let finalSave = function (data) {
@@ -277,7 +278,7 @@ class Blog {
                     self.swarm.applicationHash = response.data;
                     self.myProfile.last_videoalbum_id = id;
 
-                    return {response: self.saveProfile(self.myProfile), info: info, hash : response.data};
+                    return {response: self.saveProfile(self.myProfile), info: info, hash: response.data};
                 });
         };
 
@@ -324,68 +325,68 @@ class Blog {
     }
 
     getLatestAlbumId() {
-        return this.getVideoAlbumsInfo().then( response => {
-            const ids = response.data.map( album => album.id );
+        return this.getVideoAlbumsInfo().then(response => {
+            const ids = response.data.map(album => album.id);
 
             return ids.pop() || 1;
-        } );
+        });
     }
 
     /*
         Concern:
         If many services are trying to upload to the same albumId, they may generate the same new videoId before they are uploaded.
     */
-    generateVideoEntry( albumId, name, description, cover_file, file, type ) {
+    generateVideoEntry(albumId, name, description, cover_file, file, type) {
         const self = this;
 
-        return this.getVideoAlbumInfo( albumId ).then( function( response ) {
+        return this.getVideoAlbumInfo(albumId).then(function (response) {
             const albumInfo = response.data;
             const videos = albumInfo.videos;
             const hasNoVideos = !videos || videos.length == 0;
             const id = hasNoVideos ? 1 : videos.length + 1;
 
             return {
-                id : id,
-                name : name,
-                description : description,
-                cover_file : self.prefix + "videoalbum/" + albumId + "/" + cover_file,
-                file : self.prefix + "videoalbum/" + albumId + "/" + file,
-                type : type
+                id: id,
+                name: name,
+                description: description,
+                cover_file: self.prefix + "videoalbum/" + albumId + "/" + cover_file,
+                file: self.prefix + "videoalbum/" + albumId + "/" + file,
+                type: type
             };
-        } );
+        });
     }
 
-    appendVideoEntry( albumId, fileInfo ) {
+    appendVideoEntry(albumId, fileInfo) {
         const self = this;
 
-        return this.getVideoAlbumInfo( albumId )
-            .then( function( response ) {
+        return this.getVideoAlbumInfo(albumId)
+            .then(function (response) {
                 let data = response.data;
 
-                if ( data.videos ) {
-                    data.videos.push( fileInfo );
+                if (data.videos) {
+                    data.videos.push(fileInfo);
                 } else {
-                    data.videos = [ fileInfo ];
+                    data.videos = [fileInfo];
                 }
 
-                return self.saveVideoAlbumInfo( albumId, data );
-            } )
-            .then( function( response ) {
+                return self.saveVideoAlbumInfo(albumId, data);
+            })
+            .then(function (response) {
                 return {
-                    response : response.data
+                    response: response.data
                 };
-            } );
+            });
     }
 
     // I cannot use the browser API for new File(), and thus have to pass the data differently. We could perhaps also the existing function, but this edit gets me going for now and can open discussion.
-    uploadFileToVideoAlbumNodeJs(albumId, file, onProgress, data ) {
+    uploadFileToVideoAlbumNodeJs(albumId, file, onProgress, data) {
         const fileName = this.prefix + "videoalbum/" + albumId + "/" + file.name;
 
         return this.sendRawFile(fileName, file.data, file.type, null, null, onProgress)
-        .then(function (response) {
+            .then(function (response) {
 
-            return {fileName: fileName, response: response.data};
-        });
+                return {fileName: fileName, response: response.data};
+            });
     }
 
     uploadFileToVideoalbum(albumId, file, onProgress, fileInfo) {
@@ -454,20 +455,22 @@ class Blog {
                     cover_file: coverFile
                 };
 
-                return self.getPhotoAlbumsInfo().then(function (response) {
-                    let data = response.data;
-                    data = Array.isArray(data) ? data : [];
-                    data.push(newAlbumInfo);
-                    console.log('album info');
-                    console.log(data);
-                    return self.savePhotoAlbumsInfo(data).then(function (response) {
-                        return navigateAndSaveProfile(response);
+                return self.getPhotoAlbumsInfo()
+                    .then(function (response) {
+                        let data = response.data;
+                        data = Array.isArray(data) ? data : [];
+                        data.push(newAlbumInfo);
+                        console.log('album info');
+                        console.log(data);
+                        return self.savePhotoAlbumsInfo(data).then(function (response) {
+                            return navigateAndSaveProfile(response);
+                        });
+                    })
+                    .catch(function () {
+                        return self.savePhotoAlbumsInfo([newAlbumInfo]).then(function (response) {
+                            return navigateAndSaveProfile(response);
+                        });
                     });
-                }).catch(function () {
-                    return self.savePhotoAlbumsInfo([newAlbumInfo]).then(function (response) {
-                        return navigateAndSaveProfile(response);
-                    });
-                });
             });
     }
 
@@ -535,13 +538,14 @@ class Blog {
             "ownerAddr": ownerAddress
         };
 
-        return this.swarm.post(null, data, null, null, 'bzz-resource:').then(function (response) {
-            self.myProfile.mru = response.data;
-            return {
-                mru: response.data,
-                response: self.saveProfile(self.myProfile)
-            };
-        });
+        return this.swarm.post(null, data, null, null, 'bzz-resource:')
+            .then(function (response) {
+                self.myProfile.mru = response.data;
+                return {
+                    mru: response.data,
+                    response: self.saveProfile(self.myProfile)
+                };
+            });
     }
 
     saveMru(mru, rootAddress, swarmHash) {
