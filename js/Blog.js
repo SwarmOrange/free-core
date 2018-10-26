@@ -571,6 +571,7 @@ class Blog {
     }
 
     saveMessage(receiverHash, message, afterReceiverMessage, afterMessageId, timestamp, isPrivate) {
+        receiverHash = receiverHash.toLowerCase();
         const self = this;
         timestamp = timestamp || +new Date();
         if (isPrivate) {
