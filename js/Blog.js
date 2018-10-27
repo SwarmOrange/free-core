@@ -331,26 +331,24 @@ class Blog {
     }
 
     getLatestAlbumId() {
-        return this.getVideoAlbumsInfo().then( response => {
+        return this.getVideoAlbumsInfo()
+        .then( function(response) {
             const ids = response.data.map( album => album.id );
 
             return { albumId: ids.pop() || 1 }
         } )
-
         // @TODO: The catch should not be necessary, would simplifiy things if the root videoAlbums file was already created.
         .catch( err => {
             const { message } = err;
-            const fileIsNotAvailable = message == "manifest entry for 'social/videoalbum/info.json' not found"
+            const fileIsNotAvailable = message.includes( "404" );
             const self = this;
-            console.log("derp")
-            console.log(message)
 
             if ( fileIsNotAvailable ) {
-                this.saveVideoAlbumsInfo([])
+                return this.saveVideoAlbumsInfo([])
                 .then(function (response) {
                     const hash = response.data;
                     self.swarm.applicationHash = hash;
-                    self.myProfile.last_videoalbum_id = id;
+                    self.myProfile.last_videoalbum_id = 1;
 
                     return {albumId: 1, hash: hash};
                 });
@@ -386,7 +384,7 @@ class Blog {
         const self = this;
 
         return this.getVideoAlbumInfo(albumId)
-            .then(function (response) {
+            .then(function(response) {
                 let data = response.data;
 
                 if (data.videos) {
