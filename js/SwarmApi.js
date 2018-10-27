@@ -29,6 +29,7 @@ class SwarmApi {
             url: url,
             method: method,
             data: data,
+            maxContentLength: Infinity,
             headers: headers,
             onUploadProgress: onUploadProgress
             //responseType: responseType
