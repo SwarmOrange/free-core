@@ -274,7 +274,7 @@ class Blog {
         };
 
         let finalSave = function (data) {
-            return self.sendRawFile(self.prefix + "videoalbum/info.json", JSON.stringify(data), 'application/json')
+            return this.saveVideoAlbumsInfo( data )
                 .then(function (response) {
                     console.log(response.data);
                     self.swarm.applicationHash = response.data;
@@ -326,11 +326,35 @@ class Blog {
         return this.sendRawFile(this.prefix + "videoalbum/" + id + "/info.json", JSON.stringify(info), 'application/json');
     }
 
-    getLatestAlbumId() {
-        return this.getVideoAlbumsInfo().then(response => {
-            const ids = response.data.map(album => album.id);
+    saveVideoAlbumsInfo(data) {
+        return this.sendRawFile(this.prefix + "videoalbum/info.json", JSON.stringify(data), 'application/json');
+    }
 
-            return ids.pop() || 1;
+    getLatestAlbumId() {
+        return this.getVideoAlbumsInfo().then( response => {
+            const ids = response.data.map( album => album.id );
+
+            return { albumId: ids.pop() || 1 }
+        } )
+
+        // @TODO: The catch should not be necessary, would simplifiy things if the root videoAlbums file was already created.
+        .catch( err => {
+            const { message } = err;
+            const fileIsNotAvailable = message == "manifest entry for 'social/videoalbum/info.json' not found"
+            const self = this;
+            console.log("derp")
+            console.log(message)
+
+            if ( fileIsNotAvailable ) {
+                this.saveVideoAlbumsInfo([])
+                .then(function (response) {
+                    const hash = response.data;
+                    self.swarm.applicationHash = hash;
+                    self.myProfile.last_videoalbum_id = id;
+
+                    return {albumId: 1, hash: hash};
+                });
+            }
         });
     }
 
