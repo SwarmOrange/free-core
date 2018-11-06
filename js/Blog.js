@@ -335,12 +335,12 @@ class Blog {
         .then( function(response) {
             const ids = response.data.map( album => album.id );
 
-            return { albumId: ids.pop() || 1 }
+            return { albumId: ids.pop() || 0 }
         } )
         // @TODO: The catch should not be necessary, would simplifiy things if the root videoAlbums file was already created.
         .catch( err => {
             const { message } = err;
-            const fileIsNotAvailable = message.includes( "404" );
+            const fileIsNotAvailable = ["404", "Network Error"].some( error => message.includes( error ) )
             const self = this;
 
             if ( fileIsNotAvailable ) {
@@ -350,7 +350,7 @@ class Blog {
                     self.swarm.applicationHash = hash;
                     self.myProfile.last_videoalbum_id = 1;
 
-                    return {albumId: 1, hash: hash};
+                    return {albumId: 0, hash: hash};
                 });
             }
         });
